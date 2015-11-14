@@ -1,0 +1,13 @@
+{
+    "extends": "eslint:recommended",
+    "rules": {
+    	"no-mixed-spaces-and-tabs": 0
+    },
+    "env": {
+        "browser": 1,
+        "es6": 1
+    },
+    "ecmaFeatures": {
+        "modules": 1
+    },
+}

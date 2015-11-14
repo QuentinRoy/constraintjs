@@ -3,6 +3,7 @@
 
 // This is the full set of types that any JSEP node can be.
 // Store them here to save space when minified
+export
 var COMPOUND = 'Compound',
 	IDENTIFIER = 'Identifier',
 	MEMBER_EXP = 'MemberExpression',
@@ -34,9 +35,9 @@ var COMPOUND = 'Compound',
 		error.index = index;
 		error.dedscription = message;
 		throw error;
-	},
+	};
 
-	jsep = (function() {
+const jsep = (function() {
 
 	// Operations
 	// ----------
@@ -555,3 +556,5 @@ var COMPOUND = 'Compound',
 		};
 	return jsep;
 }());
+
+export default jsep;

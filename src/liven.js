@@ -1,8 +1,10 @@
+import { extend, each } from "./util";
+import root from "./root";
+import { Constraint, constraint_solver } from "./core";
+
 // Liven
 // -----
 
-// Will automatically call the provided function when it becomes invalid
-extend(cjs, {
 	/**
 	 * Memoize a function to avoid unnecessary re-evaluation. Its options are:
 	 *
@@ -30,7 +32,7 @@ extend(cjs, {
 	 *     x_val.set(2); // 'updating other x'
 	 *		
 	 */
-	liven:	function (func, options) {
+export default function liven(func, options) {
 				options = extend({
 					context: root, // what to equate `this` to
 					run_on_create: true, // whether it should run immediately
@@ -126,4 +128,3 @@ extend(cjs, {
 
 				return rv;
 			}
-});

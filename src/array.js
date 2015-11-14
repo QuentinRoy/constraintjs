@@ -1,9 +1,10 @@
+import { isNumber, extend, eqeqeq, map, identity, slice, toArray, each, isPositiveInteger } from "./util";
+import Constraint, { cjs_wait, cjs_signal, is_constraint } from "./core";
+import cjs_get from "./get";
+import root from "./root";
+
 // Array Constraints
 // -----------------
-
-var isPositiveInteger = function (val) {
-	return isNumber(val) && Math.round(val) === val && val >= 0;
-};
 
 /**
  * ***Note:*** The preferred constructor for arrays is `cjs.array`
@@ -26,7 +27,7 @@ var isPositiveInteger = function (val) {
  * @see cjs
  * @see cjs.array
  */
-ArrayConstraint = function (options) {
+const ArrayConstraint = function (options) {
 	options = extend({
 		equals: eqeqeq, // How to check for equality, useful for indexOf, etc
 		value: [] // starting value
@@ -70,7 +71,7 @@ ArrayConstraint = function (options) {
 
 	// For internal use; set a particular item in the array
 	var _put = function (arr, key, val) {
-		cjs.wait(); // Don't run any nullification listeners until this function is done running
+		cjs_wait(); // Don't run any nullification listeners until this function is done running
 		var $previous_value = arr._value[key];
 
 		// If there's an unsubstantiated item; use that, so that dependencies still work
@@ -88,14 +89,14 @@ ArrayConstraint = function (options) {
 			arr._value[key] = new Constraint(val, {literal: true});
 		}
 		_update_len(arr); // Make sure the length hasn't changed
-		cjs.signal(); // OK, run nullification listeners now if necessary
+		cjs_signal(); // OK, run nullification listeners now if necessary
 		return val;
 	};
 
 	// Remove every element of the array
 	var _clear = function (arr, silent) {
 		var $val;
-		cjs.wait();
+		cjs_wait();
 
 		// Keep on popping and don't stop!
 		while (arr._value.length > 0) {
@@ -107,7 +108,7 @@ ArrayConstraint = function (options) {
 		}
 		_update_len(arr, silent);
 
-		cjs.signal();
+		cjs_signal();
 		return this;
 	};
 
@@ -190,10 +191,10 @@ ArrayConstraint = function (options) {
 	 *     arr.toArray(); //['a','b','c']
 	 */
 	proto.setValue = function (arr) {
-		cjs.wait(); // Don't run nullified functions quite yet
+		cjs_wait(); // Don't run nullified functions quite yet
 		_clear(this);
 		this.push.apply(this, arr);
-		cjs.signal(); // OK, now run them
+		cjs_signal(); // OK, now run them
 		return this;
 	};
 
@@ -282,12 +283,12 @@ ArrayConstraint = function (options) {
 	proto.push = function () {
 		var i, len = arguments.length, value_len = this._value.length;
 		//Make operation atomic
-		cjs.wait();
+		cjs_wait();
 		// Add every item that was passed in
 		for (i = 0; i < len; i++) {
 			_put(this, value_len+i, arguments[i]);
 		}
-		cjs.signal();
+		cjs_signal();
 		return this.length(); // return the new length
 	};
 
@@ -308,7 +309,7 @@ ArrayConstraint = function (options) {
 	 */
 	proto.pop = function () {
 		var rv, $value = this._value.pop(); // $value should be a constraint
-		cjs.wait();
+		cjs_wait();
 
 		if (is_constraint($value)) { // if it's a constraint return the value.
 										// otherwise, return undefined
@@ -319,7 +320,7 @@ ArrayConstraint = function (options) {
 		_update_len(this);
 
 		// Ok, ready to go again
-		cjs.signal();
+		cjs_signal();
 		
 		return rv;
 	};
@@ -495,7 +496,7 @@ ArrayConstraint = function (options) {
 			to_insert_len = to_insert.length;
 
 		// Don't run any listeners until we're done
-		cjs.wait();
+		cjs_wait();
 		// It's useful to keep track of if the resulting shift size is negative because
 		// that will influence which direction we loop in
 		var resulting_shift_size = to_insert_len - howmany;
@@ -545,7 +546,7 @@ ArrayConstraint = function (options) {
 			_update_len(this);
 		}
 
-		cjs.signal(); // And finally run any listeners
+		cjs_signal(); // And finally run any listeners
 		return removed;
 	};
 
@@ -646,8 +647,8 @@ ArrayConstraint = function (options) {
 	 */
 	proto.itemConstraint = function(key) {
 		return new Constraint(function() {
-			// Call cjs.get on the key so the key can also be a constraint
-			return this.item(cjs.get(key));
+			// Call cjs_get on the key so the key can also be a constraint
+			return this.item(cjs_get(key));
 		}, {
 			context: this
 		});
@@ -706,26 +707,23 @@ ArrayConstraint = function (options) {
  * @param {*} obj - An object to check
  * @return {boolean} - `true` if `obj` is a `cjs.ArrayConstraint`, `false` otherwise
  */
-is_array = function(obj) {
+const is_array = function(obj) {
 	return obj instanceof ArrayConstraint;
 };
 
-extend(cjs, {
-	/**
-	 * Create an array constraint
-	 * @method cjs.array
-	 * @constructs cjs.ArrayConstraint
-	 * @param {Object} [options] - A set of options to control how the array constraint is evaluated
-	 * @return {cjs.ArrayConstraint} - A new array constraint object
-	 * @see cjs.ArrayConstraint
-	 * @example
-	 *     var arr = cjs.array({
-	 *         value: [1,2,3]
-	 *     });
-	 */
-	array: function (options) { return new ArrayConstraint(options); },
-	/** @expose cjs.ArrayConstraint */
-	ArrayConstraint: ArrayConstraint,
-	/** @expose cjs.isArrayConstraint */
-	isArrayConstraint: is_array
-});
+/**
+ * Create an array constraint
+ * @method cjs.array
+ * @constructs cjs.ArrayConstraint
+ * @param {Object} [options] - A set of options to control how the array constraint is evaluated
+ * @return {cjs.ArrayConstraint} - A new array constraint object
+ * @see cjs.ArrayConstraint
+ * @example
+ *     var arr = cjs.array({
+ *         value: [1,2,3]
+ *     });
+ */
+const cjs_array = function (options) { return new ArrayConstraint(options); };
+
+export default cjs_array;
+export { is_array, ArrayConstraint }

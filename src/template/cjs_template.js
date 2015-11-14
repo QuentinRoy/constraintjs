@@ -1,3 +1,17 @@
+import { every, any, rest } from "../util";
+import jsep, {
+	COMPOUND, IDENTIFIER, MEMBER_EXP, LITERAL, THIS_EXP, CALL_EXP, UNARY_EXP, BINARY_EXP, LOGICAL_EXP, CONDITIONAL_EXP, /* ARRAY_EXP, */ PARENT_EXP, CURR_LEVEL_EXP
+} from "./jsep";
+import cjs_get from "../get";
+import {
+	isFunction, map, each, has, extend, isString, indexOf, toArray, removeIndex, binary_operators, unary_operators, bind, get_array_diff,
+	bindArgs, trim, getTextContent,  aEL, last, flatten,  isElement, isAnyElement
+} from "../util";
+import { is_constraint } from "../core";
+import root from "../root";
+import cjs from "../cjs";
+
+export
 var child_is_dynamic_html		= function(child)	{ return child.type === UNARY_HB_TYPE && child.literal; },
 	child_is_text				= function(child)	{ return child.isText; },
 	every_child_is_text			= function(arr)		{ return every(arr, child_is_text); },
@@ -43,7 +57,7 @@ var child_is_dynamic_html		= function(child)	{ return child.type === UNARY_HB_TY
 		var op, object, call_context, args, val, name, i;
 		if(!node) { return; }
 		switch(node.type) {
-			case THIS_EXP: return cjs.get(last(lineage).this_exp);
+			case THIS_EXP: return cjs_get(last(lineage).this_exp);
 			case LITERAL: return node.value;
 			case UNARY_EXP:
 				op = unary_operators[node.operator];
@@ -257,7 +271,7 @@ var child_is_dynamic_html		= function(child)	{ return child.type === UNARY_HB_TY
 					bindings.push((context[value] = getInputValueConstraint(element)));
 				} else if((on_regex_match = name.match(on_regex))) {
 					var event_name = on_regex_match[2];
-					aEL(element, event_name, bind(context[value], cjs.get(last(lineage).this_exp)));
+					aEL(element, event_name, bind(context[value], cjs_get(last(lineage).this_exp)));
 				} else {
 					var constraint = get_constraint(value, context, lineage);
 					if(is_constraint(constraint)) {
@@ -314,7 +328,7 @@ var child_is_dynamic_html		= function(child)	{ return child.type === UNARY_HB_TY
 				}),
 				node, txt_binding;
 			if(!template.literal) {
-				var curr_value = cjs.get(val_constraint);
+				var curr_value = cjs_get(val_constraint);
 				if(isPolyDOM(curr_value)) {
 					node = getFirstDOMChild(curr_value);
 				} else {
@@ -462,7 +476,7 @@ var child_is_dynamic_html		= function(child)	{ return child.type === UNARY_HB_TY
 					},
 					getNodes: function() {
 						var len = template.sub_conditions.length,
-							cond = !!cjs.get(get_node_value(template.condition, context, lineage)),
+							cond = !!cjs_get(get_node_value(template.condition, context, lineage)),
 							i, children = false, memo_index, rv;
 
 						if(template.reverse) {

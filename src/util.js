@@ -1,3 +1,5 @@
+import root from "./root";
+
 /*jslint eqnull: true */
 
 // Utility functions
@@ -633,3 +635,15 @@ var get_array_diff = function (from_val, to_val, equality_check) {
 var rdashAlpha = /-([a-z]|[0-9])/ig, rmsPrefix = /^-ms-/,
 	fcamelCase = function(all, letter) { return String(letter).toUpperCase(); },
 	camel_case = function(string) { return string.replace( rmsPrefix, "ms-" ).replace(rdashAlpha, fcamelCase); };
+
+var isPositiveInteger = function (val) {
+	return isNumber(val) && Math.round(val) === val && val >= 0;
+};
+
+export {
+	isFunction, map, isNumber, slice, eqeqeq, each, has, remove, extend, uniqueId, isString, indexOf, clone,
+	any, breaker, toArray, removeIndex, reduce, rest, binary_operators, unary_operators, bind, get_array_diff,
+	FuncProto, ArrayProto, camel_case, lastIndexOf, bindArgs, trim, sTO, cTO, isArray, isObject, identity,
+	getTextContent, setTextContent, aEL, rEL, last, compact, flatten, values, isElement, isAnyElement, hasAny,
+	indexWhere, isPositiveInteger
+}

@@ -1,3 +1,9 @@
+import { extend, eqeqeq, clone, each, isString, isFunction, indexWhere, isPositiveInteger, identity, map } from "./util";
+import { Constraint, cjs_wait, cjs_signal } from "./core";
+//FIXME: remove array dependency
+import { ArrayConstraint } from "./array";
+import cjs_get from "./get";
+
 // Map Constraints
 // ---------------
 
@@ -33,7 +39,7 @@ var get_str_hash_fn = function (prop_name) {
  * @classdesc A class that adds constraint to objects
  * @param {Object} [options] - A set of options to control how the map constraint is evaluated
  */
-MapConstraint = function (options) {
+const MapConstraint = function (options) {
 	options = extend({
 		hash: defaulthash, // Improves performance when searching by key
 		valuehash: false, // Function if we should hash values, which improves performance when searching by value. By default, we don't hash values
@@ -469,12 +475,12 @@ MapConstraint = function (options) {
 	 *     map.keys(); // ['x','z','y']
 	 */
 	proto.put = function (key, value, index, literal) {
-		cjs.wait();
+		cjs_wait();
 		// Find out if there's a key or unsubstantiated info but don't create it
 		var ki = _find_key.call(this, key, true, false, literal);
 		// And do the work of putting
 		_do_set_item_ki.call(this, ki, key, value, index, literal);
-		cjs.signal();
+		cjs_signal();
 		return this;
 	};
 
@@ -502,7 +508,7 @@ MapConstraint = function (options) {
 
 		// If the item was found
 		if (key_index >= 0) {
-			cjs.wait();
+			cjs_wait();
 
 			info = hash_values[key_index]; // The info about the value
 			ordered_index = info.index.get(); // The map's index (not the index in the hash array)
@@ -545,7 +551,7 @@ MapConstraint = function (options) {
 			}
 
 			// OK, now you can run any nullified listeners
-			cjs.signal();
+			cjs_signal();
 		}
 		return this;
 	};
@@ -650,8 +656,8 @@ MapConstraint = function (options) {
 	 */
 	proto.itemConstraint = function(key) {
 		return new Constraint(function() {
-			// Call cjs.get on the key so the key can also be a constraint
-			return this.get(cjs.get(key));
+			// Call cjs_get on the key so the key can also be a constraint
+			return this.get(cjs_get(key));
 		}, {
 			context: this
 		});
@@ -672,7 +678,7 @@ MapConstraint = function (options) {
 	 */
 	proto.clear = function (silent) {
 		if (this.size() > 0) { // If I actually have something
-			cjs.wait();
+			cjs_wait();
 			// Keep removing items
 			while (this._ordered_values.length > 0) {
 				_remove_index.call(this, 0, silent);
@@ -696,7 +702,7 @@ MapConstraint = function (options) {
 				this.$size.invalidate();
 			}
 
-			cjs.signal(); // ready to run nullification listeners
+			cjs_signal(); // ready to run nullification listeners
 		}
 		return this;
 	};
@@ -763,7 +769,7 @@ MapConstraint = function (options) {
 	 * @return {cjs.ArrayConstraint} - `this`
 	 */
 	proto.setHash = function (hash) {
-		cjs.wait();
+		cjs_wait();
 		// First, empty out the old key hash and unsubstantiated values
 		this._hash = isString(hash) ? get_str_hash_fn(hash) : hash;
 		this._khash = {};
@@ -795,7 +801,7 @@ MapConstraint = function (options) {
 		}, this);
 		this._unsubstantiated_values = new_unsubstantiated_values;
 
-		cjs.signal();
+		cjs_signal();
 		return this;
 	};
 
@@ -894,11 +900,11 @@ MapConstraint = function (options) {
 			info = hash_values[key_index];
 			return info.value.get();
 		} else { // need to create it
-			cjs.wait();
+			cjs_wait();
 			context = create_fn_context || this;
 			value = create_fn.call(context, key); // will set the value to this
 			_do_set_item_ki.call(this, ki, key, value, index, literal); // do the work of putting
-			cjs.signal();
+			cjs_signal();
 			return value;
 		}
 	};
@@ -945,7 +951,7 @@ MapConstraint = function (options) {
 	 */
 	proto.moveIndex = function (old_index, new_index) {
 		var i;
-		cjs.wait();
+		cjs_wait();
 		var info = this._ordered_values[old_index];
 		// take out the old value
 		this._ordered_values.splice(old_index, 1);
@@ -965,7 +971,7 @@ MapConstraint = function (options) {
 		this.$values.invalidate();
 		this.$entries.invalidate();
 
-		cjs.signal();
+		cjs_signal();
 		return this;
 	};
 
@@ -1044,7 +1050,7 @@ MapConstraint = function (options) {
 	 * @param {boolean} [silent=false] - If set to `true`, avoids invalidating any dependent constraints.
 	 */
 	proto.destroy = function (silent) {
-		cjs.wait();
+		cjs_wait();
 		this.clear(silent);
 		this.$equality_check.destroy(silent);
 		this.$vequality_check.destroy(silent);
@@ -1052,7 +1058,7 @@ MapConstraint = function (options) {
 		this.$values.destroy(silent);
 		this.$entries.destroy(silent);
 		this.$size.destroy(silent);
-		cjs.signal();
+		cjs_signal();
 	};
 
 	/**
@@ -1080,30 +1086,27 @@ MapConstraint = function (options) {
  * @param {*} obj - An object to check
  * @return {boolean} - `true` if `obj` is a `cjs.MapConstraint`, `false` otherwise
  */
-is_map = function(obj) {
+const is_map = function(obj) {
 	return obj instanceof MapConstraint;
 };
 
-extend(cjs, {
-	/**
-	 * Create a map constraint
-	 * @method cjs.map
-	 * @constructs cjs.MapConstraint
-	 * @param {Object} [options] - A set of options to control how the map constraint is evaluated
-	 * @return {cjs.MapConstraint} - A new map constraint object
-	 * @see cjs.MapConstraint
-	 * @example Creating a map constraint
-	 *
-	 *     var map_obj = cjs.map({
-	 *         value: { foo: 1 }
-	 *     });
-	 *     cobj.get('foo'); // 1
-	 *     cobj.put('bar', 2);
-	 *     cobj.get('bar') // 2
-	 */
-	map: function (arg0, arg1) { return new MapConstraint(arg0, arg1); },
-	/** @expose cjs.MapConstraint */
-	MapConstraint: MapConstraint,
-	/** @expose cjs.isMapConstraint */
-	isMapConstraint: is_map
-});
+/**
+ * Create a map constraint
+ * @method cjs.map
+ * @constructs cjs.MapConstraint
+ * @param {Object} [options] - A set of options to control how the map constraint is evaluated
+ * @return {cjs.MapConstraint} - A new map constraint object
+ * @see cjs.MapConstraint
+ * @example Creating a map constraint
+ *
+ *     var map_obj = cjs.map({
+ *         value: { foo: 1 }
+ *     });
+ *     cobj.get('foo'); // 1
+ *     cobj.put('bar', 2);
+ *     cobj.get('bar') // 2
+ */
+const cjs_map = function (arg0, arg1) { return new MapConstraint(arg0, arg1); }
+
+export default cjs_map;
+export { is_map, MapConstraint };

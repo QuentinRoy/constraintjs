@@ -1,3 +1,8 @@
+import root from "./root";
+import { extend, slice } from "./util";
+import { Constraint } from "./core";
+import { MapConstraint } from "./map";
+
 // A function to hash the arguments passed in. By default, just a concatenation of the arguments' string value
 var memoize_default_hash = function () {
 	var i, len = arguments.length;
@@ -25,7 +30,6 @@ memoize_default_equals = function (args1, args2) {
 	}
 };
 
-extend(cjs, {
 	/**
 	 * Memoize a function to avoid unnecessary re-evaluation. Its options are:
 	 *
@@ -57,7 +61,7 @@ extend(cjs, {
 	 *     arr.splice(0, 1); // N
 	 *     get_nth_largest(0); // logged: recomputing
 	 */
-	memoize: function (getter_fn, options) {
+export default function memoize (getter_fn, options) {
 		options = extend({
 			hash: memoize_default_hash,
 			equals: memoize_default_equals,
@@ -98,4 +102,3 @@ extend(cjs, {
 		rv.options = options;
 		return rv;
 	}
-});
